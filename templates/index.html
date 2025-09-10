@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧨</text></svg>">
+    <title>TNT Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border-color: #3f3f46;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #1d4ed8;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header h1 a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .search-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-field {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .category-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        input[type="search"], select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="search"]:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .search-button:hover {
+            background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-btn {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .page-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-primary);
+        }
+
+        .page-indicator {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .results-table {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(63, 63, 70, 0.3);
+            color: var(--text-primary);
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .magnet-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            width: 2.5rem;
+            height: 2.5rem;
+            text-align: center;
+            line-height: 1.5rem;
+        }
+
+        .magnet-btn:hover {
+            background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary));
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px darkblue;
+        }
+
+        .titolo {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .categoria {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        td a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .dimensione {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .data {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .descrizione {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .search-row {
+                flex-direction: column;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .results-table {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 800px;
+            }
+            
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.875rem;
+            }
+            
+            .magnet-btn {
+                width: 2rem;
+                height: 2rem;
+                font-size: 1rem;
+                line-height: 1rem;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--accent-primary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><a href="/">TNTVillage Search</a></h1>
+        </div>
+
+        <div class="search-section">
+            <div class="search-row">
+                <div class="category-field">
+                    <label for="form2">Categoria</label>
+                    <select id="form2" onchange="search_button()">
+                        <option selected value="0">Tutte</option>
+                        {{range .Categories}}
+                        <option value="{{.Key}}">{{.Value}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="search-field">
+                    <label for="form1">Cerca torrent</label>
+                    <input type="search" id="form1" placeholder="Inserisci parole chiave..." />
+                </div>
+            </div>
+            <button type="button" class="search-button" onclick="search_button()">
+                🔍 Cerca
+            </button>
+        </div>
+
+        <div class="pagination">
+            <button class="page-btn" onclick="change_page(-1)">
+                ← Pagina precedente
+            </button>
+            <div class="page-indicator" id="page_indicator">
+                Pagina {{.Page}}
+            </div>
+            <button class="page-btn" onclick="change_page()">
+                Pagina successiva →
+            </button>
+        </div>
+
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        {{range .Headers}}
+                        <th>{{.}}</th>
+                        {{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $i, $row := .Content}}
+                    <tr>
+                        {{range $j, $cell := $row}}
+                        <td class="{{if eq $j 0}}data{{else if eq $j 1}}categoria{{else if eq $j 2}}titolo{{else if eq $j 3}}descrizione{{else if eq $j 5}}dimensione{{end}}">
+                            {{$cell}}
+                        </td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const search_field = document.getElementById("form1");
+        const category_field = document.getElementById("form2");
+        const page_indicator = document.getElementById("page_indicator");
+
+        const param_keywords = "keywords";
+        const param_category = "category";
+        const param_page = "page";
+
+        function get_query_info() {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+
+            const query = urlParams.has(param_keywords) ? urlParams.get(param_keywords) : "";
+            const category = urlParams.has(param_category) ? urlParams.get(param_category) : 0;
+            const page = urlParams.has(param_page) ? urlParams.get(param_page) : 1;
+
+            return [query, parseInt(category), parseInt(page)];
+        }
+
+        function search(query = "", category = 0, page = 1) {
+            const params_temp = new URLSearchParams({"keywords": query, "category": category, "page": page});
+            const url = window.location.origin + window.location.pathname + "?" + params_temp.toString();
+            
+            // Add loading state
+            document.body.classList.add('loading');
+            
+            window.location.assign(url);
+        }
+
+        function search_button() {
+            const query = search_field.value.trim();
+            const category = parseInt(category_field.value);
+            search(query, category, 1);
+        }
+
+        function change_page(increase = 1) {
+            const page = result[2] + increase;
+            search(result[0], result[1], page > 0 ? page : 1);
+        }
+
+        const result = get_query_info();
+
+        // Initialize form values
+        search_field.value = result[0];
+        category_field.value = result[1];
+        page_indicator.innerHTML = `Pagina ${result[2]}`;
+
+        // Event listeners
+        search_field.addEventListener("keyup", ({key}) => {
+            if (key === "Enter") {
+                search_button();
+            }
+        });
+
+        // Auto-focus search field
+        if (!result[0]) {
+            search_field.focus();
+        }
+
+        // Highlight search terms in results
+        if (result[0]) {
+            const searchTerm = result[0].toLowerCase();
+            const titleCells = document.querySelectorAll('.titolo');
+            titleCells.forEach(cell => {
+                const text = cell.textContent;
+                const regex = new RegExp(`(${searchTerm})`, 'gi');
+                if (regex.test(text)) {
+                    cell.innerHTML = text.replace(regex, '<mark style="background: rgba(59, 130, 246, 0.3); color: var(--text-primary); padding: 0.125rem 0.25rem; border-radius: 3px;">$1</mark>');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

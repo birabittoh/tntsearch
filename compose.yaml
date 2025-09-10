@@ -1,0 +1,11 @@
+services:
+  tntsearch:
+    build: .
+    container_name: tntsearch
+    image: ghcr.io/birabittoh/tntsearch:main
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./tntvillage-release-dump:/app/tntvillage-release-dump:ro
+      - ./data:/app/data
+    restart: unless-stopped

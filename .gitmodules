@@ -1,0 +1,3 @@
+[submodule "tntvillage-release-dump"]
+	path = tntvillage-release-dump
+	url = https://github.com/edoardopigaiani/tntvillage-release-dump
