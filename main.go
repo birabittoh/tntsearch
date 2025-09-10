@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -146,10 +147,7 @@ func (a *App) loadCSVData(csvPath string) error {
 	// Batch insert for better performance
 	batchSize := 1000
 	for i := 0; i < len(torrents); i += batchSize {
-		end := i + batchSize
-		if end > len(torrents) {
-			end = len(torrents)
-		}
+		end := min(i+batchSize, len(torrents))
 
 		if err := a.db.CreateInBatches(torrents[i:end], batchSize).Error; err != nil {
 			return fmt.Errorf("failed to insert batch: %w", err)
@@ -204,7 +202,7 @@ func formatTorrent(t Torrent) []any {
 		t.Descrizione,
 		template.HTML(fmt.Sprintf(`<a href="?keywords=%s&category=0&page=1">%s</a>`, t.Autore, t.Autore)),
 		sizeofFmt(t.Dimensione),
-		template.HTML(fmt.Sprintf(`<a href="magnet:?xt=urn:btih:%s" class="magnet-btn">🧲</a>`, t.Hash)),
+		template.HTML(fmt.Sprintf(`<a href="magnet:?xt=urn:btih:%s" class="magnet-btn">🧲</a><a href="https://web.archive.org/web/http://forum.tntvillage.scambioetico.org/index.php?showtopic=%s" class="magnet-btn" target="_blank">📃</a>`, t.Hash, t.Topic)),
 	}
 }
 
@@ -295,36 +293,7 @@ func (a *App) handleAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	// Simple JSON serialization
-	var jsonResults []string
-	for _, t := range torrents {
-		jsonResult := fmt.Sprintf(`{
-			"data": "%s",
-			"hash": "%s",
-			"topic": "%s",
-			"post": "%s",
-			"autore": "%s",
-			"titolo": "%s",
-			"descrizione": "%s",
-			"dimensione": %d,
-			"categoria": %d
-		}`,
-			t.Data.Format("2006-01-02T15:04:05"),
-			t.Hash,
-			strings.ReplaceAll(t.Topic, `"`, `\"`),
-			strings.ReplaceAll(t.Post, `"`, `\"`),
-			strings.ReplaceAll(t.Autore, `"`, `\"`),
-			strings.ReplaceAll(t.Titolo, `"`, `\"`),
-			strings.ReplaceAll(t.Descrizione, `"`, `\"`),
-			t.Dimensione,
-			t.Categoria,
-		)
-		jsonResults = append(jsonResults, jsonResult)
-	}
-
-	response := "[" + strings.Join(jsonResults, ",") + "]"
-	w.Write([]byte(response))
+	json.NewEncoder(w).Encode(torrents)
 }
 
 func main() {

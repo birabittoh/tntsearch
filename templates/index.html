@@ -203,7 +203,7 @@
         }
 
         .magnet-btn {
-            display: inline-block;
+            display: inherit;
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: white;
             text-decoration: none;
@@ -395,6 +395,18 @@
                     {{end}}
                 </tbody>
             </table>
+        </div>
+
+        <div class="pagination" style="margin-top: 2rem; margin-bottom: 0;">
+            <button class="page-btn" onclick="change_page(-1)">
+                ← Pagina precedente
+            </button>
+            <div class="page-indicator" id="page_indicator">
+                Pagina {{.Page}}
+            </div>
+            <button class="page-btn" onclick="change_page()">
+                Pagina successiva →
+            </button>
         </div>
     </div>
 

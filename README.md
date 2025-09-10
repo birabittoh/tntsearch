@@ -1,10 +1,10 @@
-# TNTVillage Search Tool
+# TNTSearch
 
 ## Instructions
 
 First, make sure to clone everything correctly:
 ```
-git clone https://github.com/BiRabittoh/tntsearch
+git clone https://github.com/birabittoh/tntsearch
 cd tntsearch
 git submodule update --init
 ```
@@ -24,4 +24,4 @@ You can set the following variables in `.env`:
 
 ## License
 
-Rainbbit is licensed under MIT.
+TNTSearch is licensed under MIT.
