@@ -73,10 +73,8 @@
         }
 
         .search-row {
-            display: flex;
-            gap: 1rem;
+            display: grid;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap;
         }
 
         .search-field {
@@ -141,7 +139,7 @@
             gap: 1rem;
         }
 
-        .page-btn {
+        .page-btn, .page-btn:visited {
             background: var(--bg-secondary);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
@@ -150,6 +148,9 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-size: 0.875rem;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
         }
 
         .page-btn:hover {
@@ -167,6 +168,7 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             overflow: hidden;
+            overflow-x: auto;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
@@ -256,11 +258,12 @@
         }
 
         .descrizione {
-            max-width: 300px;
+            max-width: 400px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             color: var(--text-secondary);
+            display: inherit;
         }
 
         @media (max-width: 768px) {
@@ -279,10 +282,6 @@
             .pagination {
                 flex-direction: column;
                 text-align: center;
-            }
-            
-            .results-table {
-                overflow-x: auto;
             }
             
             table {
@@ -343,145 +342,97 @@
 
         <div class="search-section">
             <div class="search-row">
-                <div class="category-field">
-                    <label for="form2">Categoria</label>
-                    <select id="form2" onchange="search_button()">
-                        <option selected value="0">Tutte</option>
-                        {{range .Categories}}
-                        <option value="{{.Key}}">{{.Value}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <div class="search-field">
-                    <label for="form1">Cerca torrent</label>
-                    <input type="search" id="form1" placeholder="Inserisci parole chiave..." />
-                </div>
-            </div>
-            <button type="button" class="search-button" onclick="search_button()">
-                🔍 Cerca
-            </button>
+                <form method="get" class="search-row" style="gap:1rem;">
+                    <div class="category-field">
+                        <label for="form2">Categoria</label>
+                        <select id="form2" name="category">
+                            <option value="0" {{if eq .Category 0}}selected{{end}}>Tutte</option>
+                            {{range .Categories}}
+                            <option value="{{.Key}}" {{if eq $.Category .Key}}selected{{end}}>{{.Value}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="search-field">
+                        <label for="form1">Cerca torrent</label>
+                        <input type="search" id="form1" name="keywords" placeholder="Inserisci parole chiave..." value="{{.Keywords}}" autofocus="{{if not .Keywords}}autofocus{{end}}" />
+                    </div>
+                    <button type="submit" class="search-button">
+                        🔍 Cerca
+                    </button>
+                </form>
         </div>
 
         <div class="pagination">
-            <button class="page-btn" onclick="change_page(-1)">
-                ← Pagina precedente
-            </button>
-            <div class="page-indicator" id="page_indicator">
-                Pagina {{.Page}}
+            {{ if gt .Page 1 }}
+            <a class="page-btn" href="?keywords={{.Keywords}}&category={{.Category}}&page={{sub .Page 1}}">
+                ←
+            </a>
+            {{ else }}
+            <div></div>
+            {{ end }}
+            <div class="page-indicator">
+                Pagina {{.Page}} di {{.PageAmount}}
             </div>
-            <button class="page-btn" onclick="change_page()">
-                Pagina successiva →
-            </button>
+            {{ if lt .Page .PageAmount }}
+            <a class="page-btn" href="?keywords={{.Keywords}}&category={{.Category}}&page={{add .Page 1}}">
+                →
+            </a>
+            {{ else }}
+            <div></div>
+            {{ end }}
         </div>
 
         <div class="results-table">
             <table>
                 <thead>
                     <tr>
-                        {{range .Headers}}
-                        <th>{{.}}</th>
-                        {{end}}
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Nome</th>
+                        <th>Autore</th>
+                        <th>Dimensione</th>
+                        <th>Azioni</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{range $i, $row := .Content}}
+                    {{if eq (len $row) 7}}
                     <tr>
-                        {{range $j, $cell := $row}}
-                        <td class="{{if eq $j 0}}data{{else if eq $j 1}}categoria{{else if eq $j 2}}titolo{{else if eq $j 3}}descrizione{{else if eq $j 5}}dimensione{{end}}">
-                            {{$cell}}
+                        <td class="data">{{index $row 0}}</td>
+                        <td class="categoria">{{index $row 1}}</td>
+                        <td class="titolo">
+                            {{highlight (printf "%s" (index $row 2)) $.Keywords}}<br>
+                            <span class="descrizione">{{highlight (printf "%s" (index $row 3)) $.Keywords}}</span>
                         </td>
-                        {{end}}
+                        <td>{{index $row 4}}</td>
+                        <td class="dimensione">{{index $row 5}}</td>
+                        <td>{{index $row 6}}</td>
                     </tr>
+                    {{end}}
                     {{end}}
                 </tbody>
             </table>
         </div>
 
-        <div class="pagination" style="margin-top: 2rem; margin-bottom: 0;">
-            <button class="page-btn" onclick="change_page(-1)">
-                ← Pagina precedente
-            </button>
-            <div class="page-indicator" id="page_indicator">
-                Pagina {{.Page}}
+        <div class="pagination" style="margin-bottom: 0; margin-top: 2rem;">
+            {{ if gt .Page 1 }}
+            <a class="page-btn" href="?keywords={{.Keywords}}&category={{.Category}}&page={{sub .Page 1}}">
+                ←
+            </a>
+            {{ else }}
+            <div></div>
+            {{ end }}
+            <div class="page-indicator">
+                Pagina {{.Page}} di {{.PageAmount}}
             </div>
-            <button class="page-btn" onclick="change_page()">
-                Pagina successiva →
-            </button>
+            {{ if lt .Page .PageAmount }}
+            <a class="page-btn" href="?keywords={{.Keywords}}&category={{.Category}}&page={{add .Page 1}}">
+                →
+            </a>
+            {{ else }}
+            <div></div>
+            {{ end }}
         </div>
     </div>
-
-    <script>
-        const search_field = document.getElementById("form1");
-        const category_field = document.getElementById("form2");
-        const page_indicator = document.getElementById("page_indicator");
-
-        const param_keywords = "keywords";
-        const param_category = "category";
-        const param_page = "page";
-
-        function get_query_info() {
-            const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
-
-            const query = urlParams.has(param_keywords) ? urlParams.get(param_keywords) : "";
-            const category = urlParams.has(param_category) ? urlParams.get(param_category) : 0;
-            const page = urlParams.has(param_page) ? urlParams.get(param_page) : 1;
-
-            return [query, parseInt(category), parseInt(page)];
-        }
-
-        function search(query = "", category = 0, page = 1) {
-            const params_temp = new URLSearchParams({"keywords": query, "category": category, "page": page});
-            const url = window.location.origin + window.location.pathname + "?" + params_temp.toString();
-            
-            // Add loading state
-            document.body.classList.add('loading');
-            
-            window.location.assign(url);
-        }
-
-        function search_button() {
-            const query = search_field.value.trim();
-            const category = parseInt(category_field.value);
-            search(query, category, 1);
-        }
-
-        function change_page(increase = 1) {
-            const page = result[2] + increase;
-            search(result[0], result[1], page > 0 ? page : 1);
-        }
-
-        const result = get_query_info();
-
-        // Initialize form values
-        search_field.value = result[0];
-        category_field.value = result[1];
-        page_indicator.innerHTML = `Pagina ${result[2]}`;
-
-        // Event listeners
-        search_field.addEventListener("keyup", ({key}) => {
-            if (key === "Enter") {
-                search_button();
-            }
-        });
-
-        // Auto-focus search field
-        if (!result[0]) {
-            search_field.focus();
-        }
-
-        // Highlight search terms in results
-        if (result[0]) {
-            const searchTerm = result[0].toLowerCase();
-            const titleCells = document.querySelectorAll('.titolo');
-            titleCells.forEach(cell => {
-                const text = cell.textContent;
-                const regex = new RegExp(`(${searchTerm})`, 'gi');
-                if (regex.test(text)) {
-                    cell.innerHTML = text.replace(regex, '<mark style="background: rgba(59, 130, 246, 0.3); color: var(--text-primary); padding: 0.125rem 0.25rem; border-radius: 3px;">$1</mark>');
-                }
-            });
-        }
-    </script>
 </body>
 </html>

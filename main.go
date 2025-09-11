@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,8 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
+
+const pageSize = 50
 
 var (
 	units = []string{"", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"}
@@ -160,7 +163,7 @@ func (a *App) loadCSVData(csvPath string) error {
 	return nil
 }
 
-func (a *App) searchTorrents(keywords string, category, page, pageSize int) ([]Torrent, error) {
+func (a *App) searchTorrents(keywords string, category, page, pageSize int) ([]Torrent, int, error) {
 	var torrents []Torrent
 	query := a.db.Model(&Torrent{})
 
@@ -173,10 +176,22 @@ func (a *App) searchTorrents(keywords string, category, page, pageSize int) ([]T
 		query = query.Where("categoria = ?", category)
 	}
 
-	offset := (page - 1) * pageSize
-	err := query.Order("data DESC").Limit(pageSize).Offset(offset).Find(&torrents).Error
+	q := query.Session(&gorm.Session{PrepareStmt: true})
 
-	return torrents, err
+	count := int64(0)
+	if err := q.Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	pageAmount := (int(count) + pageSize - 1) / pageSize
+
+	if page <= 0 || page > pageAmount || pageSize <= 0 {
+		return []Torrent{}, pageAmount, nil
+	}
+
+	offset := (page - 1) * pageSize
+	err := q.Order("data DESC").Limit(pageSize).Offset(offset).Find(&torrents).Error
+
+	return torrents, pageAmount, err
 }
 
 func sizeofFmt(num int64) string {
@@ -219,10 +234,28 @@ func getArgs(r *http.Request) (string, int, int) {
 	return keywords, category, page
 }
 
+func titleize(title, content string) template.HTML {
+	return template.HTML(fmt.Sprintf(`<span title="%s">%s</span>`, title, content))
+}
+
+func highlight(text, keywords string) template.HTML {
+	escaped := template.HTMLEscapeString(text)
+	if keywords == "" {
+		return titleize(escaped, escaped)
+	}
+	kw := template.HTMLEscapeString(keywords)
+	re := fmt.Sprintf("(?i)(%s)", regexp.QuoteMeta(kw))
+	marked := regexp.MustCompile(re).ReplaceAllString(escaped, `<mark style="background: rgba(59, 130, 246, 0.3); color: var(--text-primary); padding: 0.125rem 0.25rem; border-radius: 3px;">$1</mark>`)
+	return titleize(escaped, marked)
+}
+
+func add(a, b int) int { return a + b }
+func sub(a, b int) int { return a - b }
+
 func (a *App) handleMain(w http.ResponseWriter, r *http.Request) {
 	keywords, category, page := getArgs(r)
 
-	torrents, err := a.searchTorrents(keywords, category, page, 50)
+	torrents, pageAmount, err := a.searchTorrents(keywords, category, page, pageSize)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
@@ -234,7 +267,6 @@ func (a *App) handleMain(w http.ResponseWriter, r *http.Request) {
 		formattedResults = append(formattedResults, formatTorrent(torrent))
 	}
 
-	// Convert map to slice of key-value pairs for template
 	var categoriesList []struct {
 		Key   int
 		Value string
@@ -253,15 +285,27 @@ func (a *App) handleMain(w http.ResponseWriter, r *http.Request) {
 			Key   int
 			Value string
 		}
-		Page int
+		Page       int
+		PageAmount int
+		Keywords   string
+		Category   int
 	}{
 		Headers:    tableHeaders,
 		Content:    formattedResults,
 		Categories: categoriesList,
 		Page:       page,
+		PageAmount: pageAmount,
+		Keywords:   keywords,
+		Category:   category,
 	}
 
-	tmpl, err := template.ParseFS(templateFS, "templates/index.html")
+	funcMap := template.FuncMap{
+		"highlight": highlight,
+		"add":       add,
+		"sub":       sub,
+	}
+
+	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFS(templateFS, "templates/index.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
@@ -285,7 +329,7 @@ func (a *App) handleAPIHeader(w http.ResponseWriter, r *http.Request) {
 func (a *App) handleAPI(w http.ResponseWriter, r *http.Request) {
 	keywords, category, page := getArgs(r)
 
-	torrents, err := a.searchTorrents(keywords, category, page, 50)
+	torrents, _, err := a.searchTorrents(keywords, category, page, pageSize)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
